@@ -85,5 +85,6 @@ public class LotsController {
 @GetMapping("export")
 public ResponseEntity<Collection<LotDTO>> exportCSV(
 
+
 }
 
