@@ -2,26 +2,28 @@ package com.example.auction.DTO;
 
 import com.example.auction.model.Lot;
 import com.example.auction.model.Status;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 
 @Data
-public class LotDTO {
+public class FullLotDTO {
     private Long id;
     private Status status;
     private String title;
     private String description;
     private Integer startPrice;
     private Integer bidPrice;
-
-    public static LotDTO fromLot(Lot lot) {
-        LotDTO lotDTO = new LotDTO();
-        lotDTO.setId(lot.getId());
-        lotDTO.setStatus(lot.getStatus());
-        lotDTO.setTitle(lot.getTitle());
-        lotDTO.setDescription(lot.getDescription());
-        lotDTO.setStartPrice(lot.getStartPrice());
-        lotDTO.setBidPrice(lot.getBidPrice());
-        return lotDTO;
+    private Integer currentPrice;
+    private BidDTOFullLot lastBid;
+    public static FullLotDTO fromLot(Lot lot) {
+        FullLotDTO fullLotDTO = new FullLotDTO();
+        fullLotDTO.setId(lot.getId());
+        fullLotDTO.setStatus(lot.getStatus());
+        fullLotDTO.setTitle(lot.getTitle());
+        fullLotDTO.setDescription(lot.getDescription());
+        fullLotDTO.setStartPrice(lot.getStartPrice());
+        fullLotDTO.setBidPrice(lot.getBidPrice());
+        return fullLotDTO;
     }
     public Lot toLot() {
         Lot lot = new Lot();
@@ -33,5 +35,4 @@ public class LotDTO {
         lot.setBidPrice(this.getBidPrice());
         return lot;
     }
-
 }
