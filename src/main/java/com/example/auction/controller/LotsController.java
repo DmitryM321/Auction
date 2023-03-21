@@ -10,10 +10,13 @@ import com.example.auction.model.Status;
 import com.example.auction.projection.BidderNameBidDate;
 import com.example.auction.service.BidService;
 import com.example.auction.service.LotService;
+import com.fasterxml.jackson.annotation.JsonView;
 import liquibase.pro.packaged.F;
 import liquibase.repackaged.com.opencsv.CSVParser;
+import liquibase.repackaged.com.opencsv.ICSVWriter;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -34,13 +37,12 @@ public class LotsController {
 
     private final LotService lotService;
     private final BidService bidService;
-
+    @Autowired
     public LotsController(LotService lotService, BidService bidService) {
         this.lotService = lotService;
         this.bidService = bidService;
     }
 
-////1 Получить информацию о первом ставившем на лот
     @GetMapping("{id}/first")
     public ResponseEntity<BidderNameBidDate> findInfoFirstBidder(@PathVariable Long id) {
         if (lotService.findLotById(id) == null) {
@@ -53,7 +55,6 @@ public class LotsController {
         return ResponseEntity.ok(firstBidder);
     }
 
-////2 Возвращает имя ставившего на данный лот наибольшее количество раз
     @GetMapping("{id}/frequent")
     public ResponseEntity<BidderNameBidDate> findInfoMaxBetsBidder(@PathVariable Long id) {
         if (lotService.findLotById(id) == null) {
@@ -66,7 +67,6 @@ public class LotsController {
         return ResponseEntity.ok(maxBidder);
     }
 
-    ////3 Получить полную информацию о лотеx
     @GetMapping("/{id}")
     public ResponseEntity<FullLotDTO> findAllInfoLotById(@PathVariable Long id) {
         FullLotDTO fullLotDTO = FullLotDTO.fromLot(lotService.findLotById(id).toLot());
@@ -76,7 +76,6 @@ public class LotsController {
         return ResponseEntity.ok(lotService.findAllInfoLotById(id));
     }
 
-    //// 4 Начать торги по лоту
     @PostMapping("/{id}/start")
     public ResponseEntity<LotDTO> startLot(@PathVariable Long id) {
         LotDTO startLot = lotService.findLotById(id);
@@ -95,7 +94,6 @@ public class LotsController {
         return ResponseEntity.ok().build();
     }
 
-    //// 5 Сделать ставку по лоту
     @PostMapping("/{id}/bid")
     public ResponseEntity<Bid> makeBid(@PathVariable Long id, @RequestBody BidDTO bidDTO) {
         LotDTO lotDTO = lotService.findLotById(id);
@@ -110,7 +108,6 @@ public class LotsController {
         return ResponseEntity.ok().build();
     }
 
-    //// 6  Остановить торги по лоту OK
     @PostMapping("/{id}/stop")
     public ResponseEntity<LotDTO> stopLot(@PathVariable Long id) {
         LotDTO stopLot = lotService.findLotById(id);
@@ -129,7 +126,6 @@ public class LotsController {
         return ResponseEntity.ok().build();
     }
 
-    ////7 Создает новый лот
     @PostMapping
     public ResponseEntity<LotDTO> createLot(@RequestBody CreateLotDTO createLotDTO) {
         if (!lotService.checkMethod(createLotDTO)) {
@@ -139,7 +135,6 @@ public class LotsController {
         return ResponseEntity.ok(createLot);
     }
 
-    ////8 Получить все лоты, основываясь на фильтре статуса и номере страницы
     @GetMapping
     public ResponseEntity<Collection<LotDTO>> findAllByStatus(
             @RequestParam Status status,
@@ -150,14 +145,42 @@ public class LotsController {
         return ResponseEntity.ok(lotService.findAllByStatus(status, pageNumber));
     }
 
-//// 9 Экспортировать все лоты в файл CSV
-//    @GetMapping("/export")
-//    public void exportAllLots(HttpServletResponse response)   {
-//        Collection<FullLotDTO> lots = lotService.exportAllLots();
-//        StringWriter out = new StringWriter();
-
-
+    @GetMapping("/export")
+    public void exportAllLotsToCSV(HttpServletResponse response) throws IOException {
+        Collection<FullLotDTO> lots = lotService.exportAllLots();
+        StringWriter out = new StringWriter();
+        CSVPrinter print = new CSVPrinter(out, CSVFormat.DEFAULT);
+        lots.stream().forEach(fullLotDTO ->
+        {
+            try { print.printRecord(fullLotDTO.getId(),
+                    fullLotDTO.getTitle(),
+                    fullLotDTO.getStatus(),
+                    fullLotDTO.getLastBid(),
+                    fullLotDTO.getCurrentPrice());
+            } catch (IOException e) {
+                throw new RuntimeException(e);}
+        });
+        print.flush();
+        response.setContentType("text/csv");
+        response.setHeader("Content-Disposition", "attachment; filename=\"lot.csv\"");
+        PrintWriter writer = response.getWriter();
+        writer.write(out.toString());
+        writer.flush();
+        writer.close();
     }
+}
+//    response.setContentType("text/csv");
+//    String fileName = "lot.csv";
+//    String headerKey = "Content-Disposition";
+//    String headerValue = "attachment; filename= " + fileName;
+//    response.setHeader(headerKey, headerValue);
+//
+//    Collection<FullLotDTO> listLots = lotService.exportAllLots();
+//    StringWriter out = new StringWriter();
+//    CSVPrinter print = new CSVPrinter(out, CSVFormat.DEFAULT);
+//    String[] nameMapping = {"id, title, status, lastBid, currentPrice"};
+
+
 
 
 

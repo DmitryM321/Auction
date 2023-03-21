@@ -25,17 +25,14 @@ public class LotService {
         this.lotRepository = lotRepository;
         this.bidRepository = bidRepository;
     }
-//1 Получить информацию о первом ставившем на лот
     public BidderNameBidDate findInfoFirstBidder(Long id) {
         return bidRepository.findInfoFirstBidder(id);
     }
 
-// 2 Возвращает имя ставившего на данный лот наибольшее количество раз
     public BidderNameBidDate findInfoMaxBetsBidder(Long id) {
         return bidRepository.findInfoMaxBetsBidder(id);
     }
 
-///3 Получить полную информацию о лоте
     public FullLotDTO findAllInfoLotById(Long id) {
         FullLotDTO fullLotDTO = FullLotDTO.fromLot(findLotById(id).toLot());
         Integer currentPrice = (currentPrice(id, fullLotDTO.getBidPrice(), fullLotDTO.getStartPrice()));
@@ -44,19 +41,19 @@ public class LotService {
         //
         return fullLotDTO;
     }
- //4 Начать торги по лоту
+
     public void startLot(Long id) {
         Lot lot = lotRepository.findById(id).get();
         lot.setStatus(Status.STARTED);
         lotRepository.save(lot);
     }
-// 6 Остановить торги по лоту
+
     public void stopLot(Long id) {
      Lot lot = lotRepository.findById(id).get();
     lot.setStatus(Status.STOPPED);
     Lot stopLot = lotRepository.save(lot);
 }
-// 7 Создает новый лот
+
     public LotDTO createLot(CreateLotDTO createLotDTO){
         Lot lot = createLotDTO.toLot();
         lot.setStatus(Status.CREATED);
@@ -64,7 +61,6 @@ public class LotService {
         return  LotDTO.fromLot(createLot);
         }
 
-//// 8 Получить все лоты, основываясь на фильтре статуса и номере страницы
     public Collection<LotDTO> findAllByStatus(Status status, Integer pageNumber) {
         PageRequest pageRequest = PageRequest.of(pageNumber - 1, 10);
         return lotRepository.findAllByStatus(status, pageRequest)
@@ -72,7 +68,7 @@ public class LotService {
                 .map(LotDTO::fromLot)
                 .collect(Collectors.toList());
     }
-//// 9 Экспортировать все лоты в файл CSV
+
     public Collection<FullLotDTO> exportAllLots() {
         return lotRepository.findAll()
                     .stream()
